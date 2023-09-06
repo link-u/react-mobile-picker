@@ -1,4 +1,11 @@
-import { HTMLProps, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
+import {
+  HTMLProps,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react'
 import { usePickerActions, usePickerData } from './Picker'
 import { useColumnData } from './PickerColumn'
 
@@ -6,7 +13,8 @@ interface PickerItemRenderProps {
   selected: boolean
 }
 
-export interface PickerItemProps extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'children'> {
+export interface PickerItemProps
+  extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'children'> {
   children: ReactNode | ((renderProps: PickerItemRenderProps) => ReactNode)
   value: string
 }
@@ -16,14 +24,13 @@ function isFunction(functionToCheck: any): functionToCheck is Function {
   return typeof functionToCheck === 'function'
 }
 
-function PickerItem({
-  style,
-  children,
-  value,
-  ...restProps
-}: PickerItemProps) {
+function PickerItem({ style, children, value, ...restProps }: PickerItemProps) {
   const optionRef = useRef<HTMLDivElement | null>(null)
-  const { itemHeight, value: pickerValue } = usePickerData('Picker.Item')
+  const {
+    itemHeight,
+    selectedItemHeight,
+    value: pickerValue,
+  } = usePickerData('Picker.Item')
   const pickerActions = usePickerActions('Picker.Item')
   const { key } = useColumnData('Picker.Item')
 
@@ -32,14 +39,17 @@ function PickerItem({
     [key, pickerActions, value],
   )
 
+  const isSelected = pickerValue[key] === value
+
   const itemStyle = useMemo(
     () => ({
-      height: `${itemHeight}px`,
+      height: `${isSelected ? selectedItemHeight : itemHeight}px`,
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
+      zIndex: '10',
     }),
-    [itemHeight],
+    [itemHeight, selectedItemHeight, isSelected],
   )
 
   const handleClick = useCallback(() => {
@@ -56,7 +66,7 @@ function PickerItem({
       onClick={handleClick}
       {...restProps}
     >
-      {isFunction(children) ? children({ selected: pickerValue[key] === value }) : children}
+      {isFunction(children) ? children({ selected: isSelected }) : children}
     </div>
   )
 }

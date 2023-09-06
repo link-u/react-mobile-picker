@@ -1,4 +1,13 @@
-import { CSSProperties, HTMLProps, MutableRefObject, createContext, useCallback, useContext, useMemo, useReducer } from 'react'
+import {
+  CSSProperties,
+  HTMLProps,
+  MutableRefObject,
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useReducer,
+} from 'react'
 
 const DEFAULT_HEIGHT = 216
 const DEFAULT_ITEM_HEIGHT = 36
@@ -13,17 +22,22 @@ export interface PickerValue {
   [key: string]: string
 }
 
-export interface PickerRootProps<TType extends PickerValue> extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
+export interface PickerRootProps<TType extends PickerValue>
+  extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value: TType
   onChange: (value: TType, key: string) => void
   height?: number
   itemHeight?: number
+  selectedItemHeight?: number
+  topOffset?: number
   wheelMode?: 'off' | 'natural' | 'normal'
 }
 
 const PickerDataContext = createContext<{
   height: number
   itemHeight: number
+  selectedItemHeight: number
+  topOffset: number
   wheelMode: 'off' | 'natural' | 'normal'
   value: PickerValue
   optionGroups: { [key: string]: Option[] }
@@ -33,7 +47,9 @@ PickerDataContext.displayName = 'PickerDataContext'
 export function usePickerData(componentName: string) {
   const context = useContext(PickerDataContext)
   if (context === null) {
-    const error = new Error(`<${componentName} /> is missing a parent <Picker /> component.`)
+    const error = new Error(
+      `<${componentName} /> is missing a parent <Picker /> component.`,
+    )
     if (Error.captureStackTrace) {
       Error.captureStackTrace(error, usePickerData)
     }
@@ -51,7 +67,9 @@ PickerActionsContext.displayName = 'PickerActionsContext'
 export function usePickerActions(componentName: string) {
   const context = useContext(PickerActionsContext)
   if (context === null) {
-    const error = new Error(`<${componentName} /> is missing a parent <Picker /> component.`)
+    const error = new Error(
+      `<${componentName} /> is missing a parent <Picker /> component.`,
+    )
     if (Error.captureStackTrace) {
       Error.captureStackTrace(error, usePickerActions)
     }
@@ -62,7 +80,8 @@ export function usePickerActions(componentName: string) {
 
 function sortByDomNode<T>(
   nodes: T[],
-  resolveKey: (item: T) => HTMLElement | null = (i) => i as unknown as HTMLElement | null
+  resolveKey: (item: T) => HTMLElement | null = (i) =>
+    i as unknown as HTMLElement | null,
 ): T[] {
   return nodes.slice().sort((aItem, zItem) => {
     const a = resolveKey(aItem)
@@ -84,13 +103,16 @@ function pickerReducer(
     type: 'REGISTER_OPTION' | 'UNREGISTER_OPTION'
     key: string
     option: Option
-  }
+  },
 ) {
   switch (action.type) {
     case 'REGISTER_OPTION': {
       const { key, option } = action
       let nextOptionsForKey = [...(optionGroups[key] || []), option]
-      nextOptionsForKey = sortByDomNode(nextOptionsForKey, (o) => o.element.current)
+      nextOptionsForKey = sortByDomNode(
+        nextOptionsForKey,
+        (o) => o.element.current,
+      )
       return {
         ...optionGroups,
         [key]: nextOptionsForKey,
@@ -104,7 +126,7 @@ function pickerReducer(
       }
     }
     default: {
-      throw Error(`Unknown action: ${action.type as string}`);
+      throw Error(`Unknown action: ${action.type as string}`)
     }
   }
 }
@@ -117,21 +139,24 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
     onChange,
     height = DEFAULT_HEIGHT,
     itemHeight = DEFAULT_ITEM_HEIGHT,
+    selectedItemHeight = DEFAULT_ITEM_HEIGHT,
+    topOffset = 0,
     wheelMode = DEFAULT_WHEEL_MODE,
     ...restProps
   } = props
 
   const highlightStyle = useMemo<CSSProperties>(
     () => ({
-      height: itemHeight,
-      marginTop: -(itemHeight / 2),
+      height: selectedItemHeight,
+      marginTop: -(itemHeight / 2) - topOffset,
       position: 'absolute',
       top: '50%',
       left: 0,
       width: '100%',
       pointerEvents: 'none',
+      zIndex: '1',
     }),
-    [itemHeight]
+    [itemHeight, topOffset],
   )
   const containerStyle = useMemo<CSSProperties>(
     () => ({
@@ -140,32 +165,45 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
       display: 'flex',
       justifyContent: 'center',
       overflow: 'hidden',
-      maskImage: 'linear-gradient(to top, transparent, transparent 5%, white 20%, white 80%, transparent 95%, transparent)',
-      WebkitMaskImage: 'linear-gradient(to top, transparent, transparent 5%, white 20%, white 80%, transparent 95%, transparent)',
+      maskImage:
+        'linear-gradient(to top, transparent, transparent 5%, white 20%, white 80%, transparent 95%, transparent)',
+      WebkitMaskImage:
+        'linear-gradient(to top, white 20%, white 80%, transparent 95%, transparent)',
     }),
-    [height]
+    [height],
   )
 
   const [optionGroups, dispatch] = useReducer(pickerReducer, {})
 
   const pickerData = useMemo(
-    () => ({ height, itemHeight, wheelMode, value, optionGroups }),
-    [height, itemHeight, value, optionGroups, wheelMode]
+    () => ({
+      height,
+      itemHeight,
+      selectedItemHeight,
+      topOffset,
+      wheelMode,
+      value,
+      optionGroups,
+    }),
+    [height, itemHeight, value, optionGroups, wheelMode],
   )
-  
-  const triggerChange = useCallback((key: string, nextValue: string) => {
-    if (value[key] === nextValue) return false
-    const nextPickerValue = { ...value, [key]: nextValue }
-    onChange(nextPickerValue, key)
-    return true
-  }, [onChange, value])
+
+  const triggerChange = useCallback(
+    (key: string, nextValue: string) => {
+      if (value[key] === nextValue) return false
+      const nextPickerValue = { ...value, [key]: nextValue }
+      onChange(nextPickerValue, key)
+      return true
+    },
+    [onChange, value],
+  )
   const registerOption = useCallback((key: string, option: Option) => {
     dispatch({ type: 'REGISTER_OPTION', key, option })
     return () => dispatch({ type: 'UNREGISTER_OPTION', key, option })
   }, [])
   const pickerActions = useMemo(
     () => ({ registerOption, change: triggerChange }),
-    [registerOption, triggerChange]
+    [registerOption, triggerChange],
   )
 
   return (
@@ -176,14 +214,7 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
       }}
       {...restProps}
     >
-      <PickerActionsContext.Provider value={pickerActions}>
-        <PickerDataContext.Provider value={pickerData}>
-          {children}
-        </PickerDataContext.Provider>
-      </PickerActionsContext.Provider>
-      <div
-        style={highlightStyle}
-      >
+      <div style={highlightStyle}>
         <div
           style={{
             position: 'absolute',
@@ -192,25 +223,17 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
             left: 0,
             right: 'auto',
             width: '100%',
-            height: '1px',
-            background: '#d9d9d9',
-            transform: 'scaleY(0.5)',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            top: 'auto',
-            bottom: 0,
-            left: 0,
-            right: 'auto',
-            width: '100%',
-            height: '1px',
-            background: '#d9d9d9',
-            transform: 'scaleY(0.5)',
+            height: selectedItemHeight,
+            background: '#212121',
+            zIndex: '1',
           }}
         />
       </div>
+      <PickerActionsContext.Provider value={pickerActions}>
+        <PickerDataContext.Provider value={pickerData}>
+          {children}
+        </PickerDataContext.Provider>
+      </PickerActionsContext.Provider>
     </div>
   )
 }

@@ -156,7 +156,7 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
       pointerEvents: 'none',
       zIndex: '1',
     }),
-    [itemHeight, topOffset],
+    [itemHeight, selectedItemHeight, topOffset],
   )
   const containerStyle = useMemo<CSSProperties>(
     () => ({

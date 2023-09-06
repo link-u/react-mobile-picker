@@ -185,7 +185,15 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
       value,
       optionGroups,
     }),
-    [height, itemHeight, value, optionGroups, wheelMode],
+    [
+      height,
+      itemHeight,
+      selectedItemHeight,
+      topOffset,
+      wheelMode,
+      value,
+      optionGroups,
+    ],
   )
 
   const triggerChange = useCallback(

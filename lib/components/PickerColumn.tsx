@@ -48,6 +48,7 @@ function PickerColumn({
     wheelMode,
     value: groupValue,
     optionGroups,
+    containerRef,
   } = usePickerData('Picker.Column')
 
   // Caculate the selected index
@@ -68,18 +69,18 @@ function PickerColumn({
       itemHeight * options.length +
       selectedItemHeight / 2 -
       topOffset,
-    [height, itemHeight, options],
+    [height, itemHeight, options.length, selectedItemHeight, topOffset],
   )
   const maxTranslate = useMemo(
     () => height / 2 - selectedItemHeight / 2 - topOffset,
-    [height, itemHeight],
+    [height, selectedItemHeight, topOffset],
   )
   const [scrollerTranslate, setScrollerTranslate] = useState<number>(0)
   useEffect(() => {
     setScrollerTranslate(
       height / 2 - itemHeight / 2 - selectedIndex * itemHeight - topOffset,
     )
-  }, [height, itemHeight, selectedIndex])
+  }, [height, itemHeight, selectedIndex, topOffset])
 
   // A handler to trigger the value change
   const pickerActions = usePickerActions('Picker.Column')
@@ -106,13 +107,15 @@ function PickerColumn({
       )
     }
   }, [
-    pickerActions,
-    height,
-    itemHeight,
-    key,
     maxTranslate,
     minTranslate,
+    pickerActions,
+    key,
     options,
+    itemHeight,
+    height,
+    selectedItemHeight,
+    topOffset,
   ])
 
   // Handle touch events
@@ -145,6 +148,7 @@ function PickerColumn({
 
   const handleTouchMove = useCallback(
     (event: TouchEvent) => {
+      event.stopPropagation()
       if (event.cancelable) {
         event.preventDefault()
       }
@@ -231,7 +235,6 @@ function PickerColumn({
   )
 
   // 'touchmove' and 'wheel' should not be passive
-  const containerRef = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
     const container = containerRef.current
     if (container) {
@@ -268,7 +271,6 @@ function PickerColumn({
         ...columnStyle,
         ...style,
       }}
-      ref={containerRef}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchCancel}

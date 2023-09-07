@@ -7,6 +7,7 @@ import {
   useContext,
   useMemo,
   useReducer,
+  useRef,
 } from 'react'
 
 const DEFAULT_HEIGHT = 216
@@ -41,6 +42,7 @@ const PickerDataContext = createContext<{
   wheelMode: 'off' | 'natural' | 'normal'
   value: PickerValue
   optionGroups: { [key: string]: Option[] }
+  containerRef: MutableRefObject<HTMLDivElement | null>
 } | null>(null)
 PickerDataContext.displayName = 'PickerDataContext'
 
@@ -166,12 +168,13 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
       justifyContent: 'center',
       overflow: 'hidden',
       maskImage:
-        'linear-gradient(to top, transparent, transparent 5%, white 20%, white 80%, transparent 95%, transparent)',
+        'linear-gradient(to top, white 20%, white 80%, transparent 95%, transparent)',
       WebkitMaskImage:
         'linear-gradient(to top, white 20%, white 80%, transparent 95%, transparent)',
     }),
     [height],
   )
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   const [optionGroups, dispatch] = useReducer(pickerReducer, {})
 
@@ -184,6 +187,7 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
       wheelMode,
       value,
       optionGroups,
+      containerRef,
     }),
     [
       height,
@@ -221,6 +225,7 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
         ...style,
       }}
       {...restProps}
+      ref={containerRef}
     >
       <div style={highlightStyle}>
         <div

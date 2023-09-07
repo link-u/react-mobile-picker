@@ -118,6 +118,20 @@ function PickerColumn({
     topOffset,
   ])
 
+  const handleScrollerTranslateUpdating = useCallback(() => {
+    let nextActiveIndex = 0
+    const currentTrans = translateRef.current
+    if (currentTrans >= maxTranslate) {
+      nextActiveIndex = 0
+    } else if (currentTrans <= minTranslate) {
+      nextActiveIndex = options.length - 1
+    } else {
+      nextActiveIndex = -Math.round((currentTrans - maxTranslate) / itemHeight)
+    }
+
+    pickerActions.focusChange(key, options[nextActiveIndex].value)
+  }, [maxTranslate, minTranslate, pickerActions, key, options, itemHeight])
+
   // Handle touch events
   const [startScrollerTranslate, setStartScrollerTranslate] =
     useState<number>(0)
@@ -160,8 +174,15 @@ function PickerColumn({
       const nextScrollerTranslate =
         startScrollerTranslate + event.targetTouches[0].pageY - startTouchY
       updateScrollerWhileMoving(nextScrollerTranslate)
+      handleScrollerTranslateUpdating()
     },
-    [isMoving, startScrollerTranslate, startTouchY, updateScrollerWhileMoving],
+    [
+      handleScrollerTranslateUpdating,
+      isMoving,
+      startScrollerTranslate,
+      startTouchY,
+      updateScrollerWhileMoving,
+    ],
   )
 
   const handleTouchEnd = useCallback(() => {

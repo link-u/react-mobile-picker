@@ -11,6 +11,7 @@ import { useColumnData } from './PickerColumn'
 
 interface PickerItemRenderProps {
   selected: boolean
+  focused: boolean
 }
 
 export interface PickerItemProps
@@ -30,6 +31,7 @@ function PickerItem({ style, children, value, ...restProps }: PickerItemProps) {
     itemHeight,
     selectedItemHeight,
     value: pickerValue,
+    focusedValue,
   } = usePickerData('Picker.Item')
   const pickerActions = usePickerActions('Picker.Item')
   const { key } = useColumnData('Picker.Item')
@@ -40,6 +42,7 @@ function PickerItem({ style, children, value, ...restProps }: PickerItemProps) {
   )
 
   const isSelected = pickerValue[key] === value
+  const isFocused = focusedValue[key] === value
 
   const itemStyle = useMemo(
     () => ({
@@ -66,7 +69,9 @@ function PickerItem({ style, children, value, ...restProps }: PickerItemProps) {
       onClick={handleClick}
       {...restProps}
     >
-      {isFunction(children) ? children({ selected: isSelected }) : children}
+      {isFunction(children)
+        ? children({ selected: isSelected, focused: isFocused })
+        : children}
     </div>
   )
 }

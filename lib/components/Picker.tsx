@@ -8,6 +8,7 @@ import {
   useMemo,
   useReducer,
   useRef,
+  useState,
 } from 'react'
 
 const DEFAULT_HEIGHT = 216
@@ -41,6 +42,7 @@ const PickerDataContext = createContext<{
   topOffset: number
   wheelMode: 'off' | 'natural' | 'normal'
   value: PickerValue
+  focusedValue: PickerValue
   optionGroups: { [key: string]: Option[] }
   containerRef: MutableRefObject<HTMLDivElement | null>
 } | null>(null)
@@ -63,6 +65,7 @@ export function usePickerData(componentName: string) {
 const PickerActionsContext = createContext<{
   registerOption(key: string, option: Option): () => void
   change(key: string, value: string): boolean
+  focusChange(key: string, value: string): void
 } | null>(null)
 PickerActionsContext.displayName = 'PickerActionsContext'
 
@@ -177,6 +180,7 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   const [optionGroups, dispatch] = useReducer(pickerReducer, {})
+  const [focusedValue, setFocuesValue] = useState(value)
 
   const pickerData = useMemo(
     () => ({
@@ -186,6 +190,7 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
       topOffset,
       wheelMode,
       value,
+      focusedValue,
       optionGroups,
       containerRef,
     }),
@@ -196,6 +201,7 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
       topOffset,
       wheelMode,
       value,
+      focusedValue,
       optionGroups,
     ],
   )
@@ -213,9 +219,22 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
     dispatch({ type: 'REGISTER_OPTION', key, option })
     return () => dispatch({ type: 'UNREGISTER_OPTION', key, option })
   }, [])
+  const triggerFocusChange = useCallback(
+    (key: string, nextValue: string) => {
+      if (focusedValue[key] === nextValue) return false
+      const nextFocusedValue = { ...value, [key]: nextValue }
+      setFocuesValue(nextFocusedValue)
+      return true
+    },
+    [focusedValue, value],
+  )
   const pickerActions = useMemo(
-    () => ({ registerOption, change: triggerChange }),
-    [registerOption, triggerChange],
+    () => ({
+      registerOption,
+      change: triggerChange,
+      focusChange: triggerFocusChange,
+    }),
+    [registerOption, triggerChange, triggerFocusChange],
   )
 
   return (

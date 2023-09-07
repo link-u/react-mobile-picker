@@ -250,7 +250,7 @@ function PickerColumn({
 
       wheelingTimer.current = setTimeout(() => {
         handleWheelEnd()
-      }, 200) as unknown as number
+      }, 10) as unknown as number
     },
     [handleWheelEnd, handleWheeling, wheelingTimer, wheelMode],
   )

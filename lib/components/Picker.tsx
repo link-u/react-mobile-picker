@@ -211,6 +211,7 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
       if (value[key] === nextValue) return false
       const nextPickerValue = { ...value, [key]: nextValue }
       onChange(nextPickerValue, key)
+      setFocuesValue(nextPickerValue)
       return true
     },
     [onChange, value],

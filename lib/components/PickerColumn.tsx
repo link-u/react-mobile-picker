@@ -64,12 +64,9 @@ function PickerColumn({
 
   // Caculate the translate of scroller
   const minTranslate = useMemo(
-    () =>
-      height / 2 -
-      itemHeight * options.length +
-      selectedItemHeight / 2 -
-      topOffset,
-    [height, itemHeight, options.length, selectedItemHeight, topOffset],
+    () => height / 2 - itemHeight * options.length + itemHeight / 2 - topOffset,
+
+    [height, itemHeight, options.length, topOffset],
   )
   const maxTranslate = useMemo(
     () => height / 2 - selectedItemHeight / 2 - topOffset,
@@ -78,9 +75,12 @@ function PickerColumn({
   const [scrollerTranslate, setScrollerTranslate] = useState<number>(0)
   useEffect(() => {
     setScrollerTranslate(
-      height / 2 - itemHeight / 2 - selectedIndex * itemHeight - topOffset,
+      height / 2 -
+        selectedItemHeight / 2 -
+        selectedIndex * itemHeight -
+        topOffset,
     )
-  }, [height, itemHeight, selectedIndex, topOffset])
+  }, [height, itemHeight, selectedIndex, selectedItemHeight, topOffset])
 
   // A handler to trigger the value change
   const pickerActions = usePickerActions('Picker.Column')
@@ -139,7 +139,7 @@ function PickerColumn({
   )
 
   const handleTouchStart = useCallback(
-    (event: React.TouchEvent) => {
+    (event: TouchEvent) => {
       setStartTouchY(event.targetTouches[0].pageY)
       setStartScrollerTranslate(scrollerTranslate)
     },
@@ -234,22 +234,41 @@ function PickerColumn({
     [handleWheelEnd, handleWheeling, wheelingTimer, wheelMode],
   )
 
+  // containerRefにイベント登録
+
   // 'touchmove' and 'wheel' should not be passive
   useEffect(() => {
     const container = containerRef.current
     if (container) {
+      container.addEventListener('touchstart', handleTouchStart, {
+        passive: false,
+      })
       container.addEventListener('touchmove', handleTouchMove, {
+        passive: false,
+      })
+      container.addEventListener('touchend', handleTouchEnd, { passive: false })
+      container.addEventListener('touchcancel', handleTouchCancel, {
         passive: false,
       })
       container.addEventListener('wheel', handleWheel, { passive: false })
     }
     return () => {
       if (container) {
+        container.removeEventListener('touchstart', handleTouchStart)
         container.removeEventListener('touchmove', handleTouchMove)
+        container.removeEventListener('touchend', handleTouchEnd)
+        container.removeEventListener('touchcancel', handleTouchCancel)
         container.removeEventListener('wheel', handleWheel)
       }
     }
-  }, [handleTouchMove, handleWheel])
+  }, [
+    containerRef,
+    handleTouchCancel,
+    handleTouchEnd,
+    handleTouchMove,
+    handleTouchStart,
+    handleWheel,
+  ])
 
   const columnStyle = useMemo<CSSProperties>(
     () => ({
@@ -271,9 +290,6 @@ function PickerColumn({
         ...columnStyle,
         ...style,
       }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchCancel}
       {...restProps}
     >
       <PickerColumnDataContext.Provider value={columnData}>

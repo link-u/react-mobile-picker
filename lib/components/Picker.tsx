@@ -150,7 +150,7 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
   const highlightStyle = useMemo<CSSProperties>(
     () => ({
       height: selectedItemHeight,
-      marginTop: -(itemHeight / 2) - topOffset,
+      marginTop: -(selectedItemHeight / 2) - topOffset,
       position: 'absolute',
       top: '50%',
       left: 0,
@@ -158,7 +158,7 @@ function PickerRoot<TType extends PickerValue>(props: PickerRootProps<TType>) {
       pointerEvents: 'none',
       zIndex: '1',
     }),
-    [itemHeight, selectedItemHeight, topOffset],
+    [selectedItemHeight, topOffset],
   )
   const containerStyle = useMemo<CSSProperties>(
     () => ({
